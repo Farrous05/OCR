@@ -69,6 +69,22 @@ Requires JDK 21+.
 
 ## Try it
 
+### Web interface (drag & drop an image)
+
+```bash
+mvn -q compile dependency:build-classpath -Dmdep.outputFile=target/cp.txt
+java -cp "target/classes:$(cat target/cp.txt)" com.pos.ocr.web.WebServer 8080
+# open http://localhost:8080
+```
+
+Drop a receipt photo (PNG/JPEG) or click **Load sample**, then **Process**. The page shows the
+disposition (accepted / review / quality-reject), extracted store/invoice/date, the line-item
+table, totals, and every math check with expected-vs-actual, plus repairs and violations.
+Endpoints: `GET /` UI · `POST /api/ocr` raw image → JSON · `GET /api/sample` sample PNG.
+Test bench only — binds 127.0.0.1, no auth/TLS; don't expose it as-is.
+
+### CLI
+
 ```bash
 mvn -q compile dependency:build-classpath -Dmdep.outputFile=target/cp.txt
 CP="target/classes:$(cat target/cp.txt)"

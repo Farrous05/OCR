@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receipt OCR — Test Bench</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #181b22; --border: #2a2f3a; --text: #e6e9ef;
+    --muted: #9aa3b2; --accent: #4f8cff; --ok: #2ecc71; --warn: #f1c40f; --bad: #e74c3c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  header { padding: 20px 28px; border-bottom: 1px solid var(--border); }
+  header h1 { margin: 0; font-size: 19px; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px 28px; max-width: 1200px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+  #drop {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 28px 14px;
+    text-align: center; color: var(--muted); cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  #drop.hover { border-color: var(--accent); background: rgba(79,140,255,.06); }
+  #drop strong { color: var(--text); }
+  #preview { max-width: 100%; border-radius: 8px; margin-top: 14px; display: none; border: 1px solid var(--border); }
+  .btnrow { display: flex; gap: 10px; margin-top: 14px; }
+  button {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+    background: #20242e; color: var(--text); font-size: 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  #status { display: none; margin-bottom: 14px; padding: 12px 16px; border-radius: 8px; font-weight: 700; font-size: 16px; }
+  #status.ACCEPTED { display: block; background: rgba(46,204,113,.12); color: var(--ok); border: 1px solid rgba(46,204,113,.4); }
+  #status.NEEDS_REVIEW { display: block; background: rgba(241,196,15,.10); color: var(--warn); border: 1px solid rgba(241,196,15,.4); }
+  #status.REJECTED_QUALITY { display: block; background: rgba(231,76,60,.10); color: var(--bad); border: 1px solid rgba(231,76,60,.4); }
+  #status.ERROR { display: block; background: rgba(231,76,60,.10); color: var(--bad); border: 1px solid rgba(231,76,60,.4); }
+  #meta { color: var(--muted); font-size: 13px; margin-bottom: 14px; display: none; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 14px; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; }
+
+  .check { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .check:last-child { border-bottom: 0; }
+  .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; flex: none; }
+  .badge.pass { background: rgba(46,204,113,.15); color: var(--ok); }
+  .badge.fail { background: rgba(231,76,60,.15); color: var(--bad); }
+  .check .exp { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  ul.notes { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+  ul.notes li.violation { color: var(--bad); }
+  ul.notes li.repair { color: var(--warn); }
+  ul.notes li.failure { color: var(--muted); }
+
+  .totals { margin-top: 10px; }
+  .totals .kv dd { text-align: right; font-variant-numeric: tabular-nums; }
+  .totals .kv { grid-template-columns: 1fr auto; }
+  .totals .grand { font-weight: 700; font-size: 16px; }
+  #right > .panel { margin-bottom: 16px; }
+  #spinner { display: none; color: var(--muted); margin-bottom: 14px; }
+  #spinner.on { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Receipt OCR — Test Bench</h1>
+  <p>PP-OCRv4 (in-JVM, ONNX) → geometry structuring → deterministic math validation. Nothing math-invalid is ever accepted.</p>
+</header>
+<main>
+  <div id="left">
+    <div class="panel">
+      <h2>Input</h2>
+      <div id="drop">
+        <strong>Drop a receipt image here</strong><br>or click to choose a file (PNG/JPEG)
+        <input type="file" id="file" accept="image/png,image/jpeg" hidden>
+      </div>
+      <img id="preview" alt="preview">
+      <div class="btnrow">
+        <button id="sampleBtn">Load sample</button>
+        <button id="runBtn" class="primary" disabled>Process</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="right">
+    <div id="spinner">Processing… (first run initializes the ONNX session, takes a few seconds)</div>
+    <div id="status"></div>
+    <div id="meta"></div>
+
+    <div class="panel" id="docPanel" style="display:none">
+      <h2>Extracted document</h2>
+      <dl class="kv" id="docMeta"></dl>
+      <table id="itemsTable" style="margin-top:12px">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="totals"><dl class="kv" id="totals"></dl></div>
+    </div>
+
+    <div class="panel" id="checksPanel" style="display:none">
+      <h2>Math validation</h2>
+      <div id="checks"></div>
+      <ul class="notes" id="notes"></ul>
+    </div>
+  </div>
+</main>
+<script>
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const preview = document.getElementById('preview');
+const runBtn = document.getElementById('runBtn');
+const sampleBtn = document.getElementById('sampleBtn');
+let imageBlob = null;
+
+function setImage(blob) {
+  imageBlob = blob;
+  preview.src = URL.createObjectURL(blob);
+  preview.style.display = 'block';
+  runBtn.disabled = false;
+}
+
+drop.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) setImage(fileInput.files[0]);
+});
+['dragover','dragenter'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.add('hover');
+}));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => {
+  e.preventDefault(); drop.classList.remove('hover');
+}));
+drop.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f) setImage(f);
+});
+
+sampleBtn.addEventListener('click', async () => {
+  const res = await fetch('/api/sample');
+  setImage(await res.blob());
+});
+
+runBtn.addEventListener('click', async () => {
+  if (!imageBlob) return;
+  document.getElementById('spinner').classList.add('on');
+  runBtn.disabled = true;
+  try {
+    const res = await fetch('/api/ocr', { method: 'POST', body: imageBlob });
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    showStatus('ERROR', 'Request failed: ' + err);
+  } finally {
+    document.getElementById('spinner').classList.remove('on');
+    runBtn.disabled = false;
+  }
+});
+
+function showStatus(cls, text) {
+  const s = document.getElementById('status');
+  s.className = cls;
+  s.textContent = text;
+}
+
+function esc(v) { return v == null ? '—' : String(v); }
+
+function render(d) {
+  if (d.error) { showStatus('ERROR', d.error); return; }
+
+  const labels = {
+    ACCEPTED: '✓ ACCEPTED — math closes, safe to persist',
+    NEEDS_REVIEW: '⚠ NEEDS REVIEW — routed to the human-review queue',
+    REJECTED_QUALITY: '✗ REJECTED — image quality too low, re-scan'
+  };
+  showStatus(d.status, labels[d.status] || d.status);
+
+  const meta = document.getElementById('meta');
+  meta.style.display = 'block';
+  meta.textContent = `tier: ${d.tier} · confidence: ${d.confidence} · ${d.millis} ms · quality: ${d.quality ?? '—'}`;
+
+  const docPanel = document.getElementById('docPanel');
+  const checksPanel = document.getElementById('checksPanel');
+
+  if (d.document) {
+    docPanel.style.display = 'block';
+    document.getElementById('docMeta').innerHTML =
+      `<dt>Store</dt><dd>${esc(d.document.store)}</dd>` +
+      `<dt>Invoice</dt><dd>${esc(d.document.invoiceId)}</dd>` +
+      `<dt>Date</dt><dd>${esc(d.document.date)}</dd>`;
+    const tbody = document.querySelector('#itemsTable tbody');
+    tbody.innerHTML = (d.document.items || []).map(li =>
+      `<tr><td>${esc(li.name)}</td><td class="num">${esc(li.qty)}</td>` +
+      `<td class="num">${esc(li.unit)}</td><td class="num">${esc(li.total)}</td></tr>`
+    ).join('') || '<tr><td colspan="4" style="color:var(--muted)">no line items</td></tr>';
+    document.getElementById('totals').innerHTML =
+      `<dt>Subtotal</dt><dd>${esc(d.document.subtotal)}</dd>` +
+      `<dt>Tax</dt><dd>${esc(d.document.tax)}</dd>` +
+      `<dt class="grand">TOTAL</dt><dd class="grand">${esc(d.document.total)}</dd>` +
+      `<dt>Tendered</dt><dd>${esc(d.document.tendered)}</dd>` +
+      `<dt>Change</dt><dd>${esc(d.document.change)}</dd>`;
+  } else {
+    docPanel.style.display = 'none';
+  }
+
+  const hasChecks = (d.checks && d.checks.length) || (d.violations && d.violations.length)
+      || (d.repairs && d.repairs.length) || (d.tierFailures && d.tierFailures.length);
+  if (hasChecks) {
+    checksPanel.style.display = 'block';
+    document.getElementById('checks').innerHTML = (d.checks || []).map(c =>
+      `<div class="check"><span class="badge ${c.passed ? 'pass' : 'fail'}">${c.passed ? 'PASS' : 'FAIL'}</span>` +
+      `<span>${esc(c.name)}</span><span class="exp">expected ${esc(c.expected)} · actual ${esc(c.actual)}</span></div>`
+    ).join('') || '<div style="color:var(--muted)">no checks were applicable</div>';
+    document.getElementById('notes').innerHTML =
+      (d.violations || []).map(v => `<li class="violation">violation: ${esc(v)}</li>`).join('') +
+      (d.repairs || []).map(r => `<li class="repair">repaired: ${esc(r)}</li>`).join('') +
+      (d.tierFailures || []).map(f => `<li class="failure">tier: ${esc(f)}</li>`).join('');
+  } else {
+    checksPanel.style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>

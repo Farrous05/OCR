@@ -45,36 +45,7 @@ public final class Demo {
 
     /** Render a realistic receipt as pixels — the real engine must genuinely read the glyphs. */
     private static BufferedImage renderSampleReceipt() {
-        int w = 520;
-        int h = 560;
-        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        java.awt.Graphics2D g = img.createGraphics();
-        g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
-                java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setColor(java.awt.Color.WHITE);
-        g.fillRect(0, 0, w, h);
-        g.setColor(java.awt.Color.BLACK);
-        g.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.BOLD, 24));
-        int y = 50;
-        for (String line : new String[]{
-                "MARKET FRESH",
-                "Invoice #R-9001",
-                "2026-06-10",
-                "",
-                "Apple      2   1.50    3.00",
-                "Milk       1   2.25    2.25",
-                "",
-                "SUBTOTAL           5.25",
-                "TAX                0.53",
-                "TOTAL              5.78",
-                "CASH              10.00",
-                "CHANGE             4.22",
-        }) {
-            g.drawString(line, 40, y);
-            y += 42;
-        }
-        g.dispose();
-        return img;
+        return com.pos.ocr.web.SampleReceipt.render();
     }
 
     private static void runOnImage(String path) throws Exception {

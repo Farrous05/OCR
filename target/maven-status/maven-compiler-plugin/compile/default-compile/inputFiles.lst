@@ -33,3 +33,6 @@
 /Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/validation/StringSimilarity.java
 /Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/validation/ValidationProfile.java
 /Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/validation/ValidationResult.java
+/Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/web/Json.java
+/Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/web/SampleReceipt.java
+/Users/faresshretah/code/OCR/src/main/java/com/pos/ocr/web/WebServer.java
