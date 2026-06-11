@@ -1,0 +1,17 @@
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/e2e/OcrPipelineE2ETest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/e2e/OcrServiceConcurrencyTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/integration/StructureValidationIntegrationTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/model/MoneyTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/pipeline/OcrPipelineFailureIsolationTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/preprocessing/BinarizerTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/preprocessing/DeskewEstimatorTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/preprocessing/ImageQualityGateTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/structuring/GeometryStructurerTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/structuring/TableReconstructorTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/testutil/Fixtures.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/testutil/TestImages.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/validation/AnchorMatcherTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/validation/CharacterRepairTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/validation/MathValidatorTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/validation/NumericNormalizerTest.java
+/Users/faresshretah/code/OCR/src/test/java/com/pos/ocr/validation/StringSimilarityTest.java
